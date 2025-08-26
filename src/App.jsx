@@ -18,55 +18,30 @@ const NumberInput = ({ label, suffix, value, onChange, note, step=1, min=0 }) =>
   </label>
 );
 
-const presets = {
-  "Starter": {
-    audienceSize: 150000,
-    reachRate: 10,
-    platformCTR: 4,
-    emailSubscribers: 2500,
-    emailCTR: 5,
-    platformCVR: 2.5,
-    emailCVR: 1.0,
-    fePrice: 37,
-    bumpPrice: 22,
-    bumpTakeRate: 30,
-    upsellPrice: 68,
-    upsellTakeRate: 20,
-    refundRate: 2,
-    launchesPerYear: 4
-  },
-  "Growing": {
-    audienceSize: 300000,
-    reachRate: 12,
-    platformCTR: 4.5,
-    emailSubscribers: 20000,
-    emailCTR: 6,
-    platformCVR: 2.8,
-    emailCVR: 1.2,
-    fePrice: 47,
-    bumpPrice: 27,
-    bumpTakeRate: 32,
-    upsellPrice: 87,
-    upsellTakeRate: 22,
-    refundRate: 2.5,
-    launchesPerYear: 6
-  },
-  "Established": {
-    audienceSize: 600000,
-    reachRate: 15,
-    platformCTR: 5,
-    emailSubscribers: 80000,
-    emailCTR: 7,
-    platformCVR: 3.2,
-    emailCVR: 1.5,
-    fePrice: 67,
-    bumpPrice: 37,
-    bumpTakeRate: 35,
-    upsellPrice: 97,
-    upsellTakeRate: 25,
-    refundRate: 2,
-    launchesPerYear: 8
-  },
+// Audience tiers (buttons set only audience size)
+const tiers = [
+  { name: "Micro", size: 10000 },
+  { name: "Mid-tier", size: 100000 },
+  { name: "Macro", size: 500000 },
+  { name: "Mega", size: 1000000 },
+];
+
+// Defaults (Mid-tier)
+const initial = {
+  audienceSize: 100000,   // Mid-tier default
+  reachRate: 10,
+  platformCTR: 4,
+  emailSubscribers: 2500,
+  emailCTR: 5,
+  platformCVR: 2.5,
+  emailCVR: 1.0,
+  fePrice: 37,
+  bumpPrice: 22,
+  bumpTakeRate: 30,
+  upsellPrice: 68,
+  upsellTakeRate: 20,
+  refundRate: 2,
+  launchesPerYear: 4
 };
 
 function fmtCurrency(n){
@@ -80,8 +55,8 @@ function fmtPct(n){
 }
 
 export default function App(){
-  const [preset, setPreset] = useState("Starter");
-  const [inputs, setInputs] = useState({...presets["Starter"]});
+  const [inputs, setInputs] = useState({...initial});
+  const [selectedTier, setSelectedTier] = useState("Mid-tier");
   const [whatIf, setWhatIf] = useState({
     emailBuyersUp10: false,
     platformBuyersUp10: false,
@@ -155,17 +130,19 @@ export default function App(){
     };
   }, [inputs, whatIf]);
 
-  const applyPreset = (name) => {
-    setPreset(name);
-    setInputs({...presets[name]});
-  };
-
-  const Toggle = ({label, checked, onChange}) => (
+  const TierButton = ({ name, size }) => (
     <button
-      onClick={onChange}
-      className={`rounded-2xl px-3 py-2 border text-sm ${ checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}
+      onClick={() => {
+        setSelectedTier(name);
+        setInputs(s => ({ ...s, audienceSize: size }));
+      }}
+      className={`rounded-2xl px-3 py-2 text-sm font-medium border ${
+        selectedTier === name
+          ? 'bg-indigo-600 text-white border-indigo-600'
+          : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200'
+      }`}
     >
-      {label}
+      {name}
     </button>
   );
 
@@ -178,24 +155,16 @@ export default function App(){
   );
 
   return (
-    <div className="min-h-screen w-full p-6">
+    <div className="w-full pt-6 pb-2 px-6">
       <div className="mx-auto max-w-6xl">
-        <header className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <header className="mb-4 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Creator Digital Product Revenue Calculator</h1>
             <p className="text-gray-600 mt-1">Enter your assumptions to project how much your own digital products can increase your revenue.</p>
             <p className="text-[11px] text-gray-500 mt-1">Notes: This is a directional model, not a forecast. Real-world performance varies with audience and list quality, offer-market fit, and promo strategy.</p>
           </div>
           <div className="flex items-center gap-2">
-            {Object.keys(presets).map((p) => (
-              <button
-                key={p}
-                onClick={() => applyPreset(p)}
-                className={`rounded-2xl px-3 py-2 text-sm font-medium border ${ preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200' }`}
-              >
-                {p}
-              </button>
-            ))}
+            {tiers.map(t => <TierButton key={t.name} name={t.name} size={t.size} />)}
           </div>
         </header>
 
@@ -203,26 +172,26 @@ export default function App(){
           <section className="card bg-white p-5 ring-1 ring-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Inputs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <NumberInput label="Audience size" value={inputs.audienceSize} onChange={(v)=>update('audienceSize', v)} note="Total followers on your main platform(s)." />
-              <NumberInput label="Average reach per post" suffix="%" value={inputs.reachRate} onChange={(v)=>update('reachRate', v)} note="% of audience who see the promo." step={0.1} />
+              <NumberInput label="Audience size" value={audienceSize} onChange={(v)=>update('audienceSize', v)} note="Total followers on your main platform(s)." />
+              <NumberInput label="Average reach per post" suffix="%" value={reachRate} onChange={(v)=>update('reachRate', v)} note="% of audience who see the promo." step={0.1} />
 
-              <NumberInput label="Platform click‑through rate" suffix="%" value={inputs.platformCTR} onChange={(v)=>update('platformCTR', v)} note="% of reached who click to sales page." step={0.1} />
-              <NumberInput label="Existing email subscribers" value={inputs.emailSubscribers} onChange={(v)=>update('emailSubscribers', v)} />
+              <NumberInput label="Platform click‑through rate" suffix="%" value={platformCTR} onChange={(v)=>update('platformCTR', v)} note="% of reached who click to sales page." step={0.1} />
+              <NumberInput label="Existing email subscribers" value={emailSubscribers} onChange={(v)=>update('emailSubscribers', v)} />
 
-              <NumberInput label="Email click‑through rate" suffix="%" value={inputs.emailCTR} onChange={(v)=>update('emailCTR', v)} note="% of subscribers who click the email." step={0.1} />
-              <NumberInput label="Platform conversion rate (buyers)" suffix="%" value={inputs.platformCVR} onChange={(v)=>update('platformCVR', v)} note="% of platform CTR who purchase." step={0.1} />
+              <NumberInput label="Email click‑through rate" suffix="%" value={emailCTR} onChange={(v)=>update('emailCTR', v)} note="% of subscribers who click the email." step={0.1} />
+              <NumberInput label="Platform conversion rate (buyers)" suffix="%" value={platformCVR} onChange={(v)=>update('platformCVR', v)} note="% of platform CTR who purchase." step={0.1} />
 
-              <NumberInput label="Email conversion rate (buyers)" suffix="%" value={inputs.emailCVR} onChange={(v)=>update('emailCVR', v)} note="% of email CTR who purchase." step={0.1} />
-              <NumberInput label="Front‑end offer price" value={inputs.fePrice} onChange={(v)=>update('fePrice', v)} />
+              <NumberInput label="Email conversion rate (buyers)" suffix="%" value={emailCVR} onChange={(v)=>update('emailCVR', v)} note="% of email CTR who purchase." step={0.1} />
+              <NumberInput label="Front‑end offer price" value={fePrice} onChange={(v)=>update('fePrice', v)} />
 
-              <NumberInput label="Order bump price" value={inputs.bumpPrice} onChange={(v)=>update('bumpPrice', v)} />
-              <NumberInput label="Order bump take rate" suffix="%" value={inputs.bumpTakeRate} onChange={(v)=>update('bumpTakeRate', v)} note="% of buyers who add the bump." step={0.1} />
+              <NumberInput label="Order bump price" value={bumpPrice} onChange={(v)=>update('bumpPrice', v)} />
+              <NumberInput label="Order bump take rate" suffix="%" value={bumpTakeRate} onChange={(v)=>update('bumpTakeRate', v)} note="% of buyers who add the bump." step={0.1} />
 
-              <NumberInput label="Upsell offer price" value={inputs.upsellPrice} onChange={(v)=>update('upsellPrice', v)} />
-              <NumberInput label="Upsell offer take rate" suffix="%" value={inputs.upsellTakeRate} onChange={(v)=>update('upsellTakeRate', v)} note="% of buyers who take the upsell." step={0.1} />
+              <NumberInput label="Upsell offer price" value={upsellPrice} onChange={(v)=>update('upsellPrice', v)} />
+              <NumberInput label="Upsell offer take rate" suffix="%" value={upsellTakeRate} onChange={(v)=>update('upsellTakeRate', v)} note="% of buyers who take the upsell." step={0.1} />
 
-              <NumberInput label="Refund rate" suffix="%" value={inputs.refundRate} onChange={(v)=>update('refundRate', v)} note="Applied to FE + bump + upsell combined." step={0.1} />
-              <NumberInput label="Launches per year" value={inputs.launchesPerYear} onChange={(v)=>update('launchesPerYear', v)} />
+              <NumberInput label="Refund rate" suffix="%" value={refundRate} onChange={(v)=>update('refundRate', v)} note="Applied to FE + bump + upsell combined." step={0.1} />
+              <NumberInput label="Launches per year" value={launchesPerYear} onChange={(v)=>update('launchesPerYear', v)} />
             </div>
           </section>
 
@@ -259,10 +228,10 @@ export default function App(){
             <div className="mt-4 rounded-2xl bg-gray-50 p-4">
               <div className="text-sm font-medium text-gray-700 mb-2">What‑if toggles</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
-                <Toggle label="Increase email buyers by 10%" checked={whatIf.emailBuyersUp10} onChange={()=>setWhatIf(s=>({...s, emailBuyersUp10: !s.emailBuyersUp10}))} />
-                <Toggle label="Increase platform buyers by 10%" checked={whatIf.platformBuyersUp10} onChange={()=>setWhatIf(s=>({...s, platformBuyersUp10: !s.platformBuyersUp10}))} />
-                <Toggle label="Increase order bump take rate by 10%" checked={whatIf.bumpTakeRateUp10} onChange={()=>setWhatIf(s=>({...s, bumpTakeRateUp10: !s.bumpTakeRateUp10}))} />
-                <Toggle label="Increase upsell offer take rate by 10%" checked={whatIf.upsellTakeRateUp10} onChange={()=>setWhatIf(s=>({...s, upsellTakeRateUp10: !s.upsellTakeRateUp10}))} />
+                <button onClick={()=>setWhatIf(s=>({...s, emailBuyersUp10: !s.emailBuyersUp10}))} className={`rounded-2xl px-3 py-2 border text-sm ${ whatIf.emailBuyersUp10 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}>Increase email buyers by 10%</button>
+                <button onClick={()=>setWhatIf(s=>({...s, platformBuyersUp10: !s.platformBuyersUp10}))} className={`rounded-2xl px-3 py-2 border text-sm ${ whatIf.platformBuyersUp10 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}>Increase platform buyers by 10%</button>
+                <button onClick={()=>setWhatIf(s=>({...s, bumpTakeRateUp10: !s.bumpTakeRateUp10}))} className={`rounded-2xl px-3 py-2 border text-sm ${ whatIf.bumpTakeRateUp10 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}>Increase order bump take rate by 10%</button>
+                <button onClick={()=>setWhatIf(s=>({...s, upsellTakeRateUp10: !s.upsellTakeRateUp10}))} className={`rounded-2xl px-3 py-2 border text-sm ${ whatIf.upsellTakeRateUp10 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}>Increase upsell offer take rate by 10%</button>
               </div>
             </div>
           </section>
