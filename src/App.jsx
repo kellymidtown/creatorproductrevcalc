@@ -136,7 +136,7 @@ export default function App(){
         setSelectedTier(name);
         setInputs(s => ({ ...s, audienceSize: size }));
       }}
-      className={`rounded-2xl px-3 py-2 text-sm font-medium border ${
+      className={`w-full rounded-2xl py-2 text-sm font-medium border ${
         selectedTier === name
           ? 'bg-indigo-600 text-white border-indigo-600'
           : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200'
@@ -158,13 +158,15 @@ export default function App(){
     <div className="w-full pt-6 pb-2 px-6">
       <div className="mx-auto max-w-6xl">
         <header className="mb-4 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl md:text-3xl font-bold">Creator Digital Product Revenue Calculator</h1>
             <p className="text-gray-600 mt-1">Enter your assumptions to project how much your own digital products can increase your revenue.</p>
             <p className="text-[11px] text-gray-500 mt-1">Notes: This is a directional model, not a forecast. Real-world performance varies with audience and list quality, offer-market fit, and promo strategy.</p>
           </div>
-          <div className="flex items-center gap-2">
-            {tiers.map(t => <TierButton key={t.name} name={t.name} size={t.size} />)}
+          <div className="w-full md:w-[520px]">
+            <div className="grid grid-cols-4 gap-2">
+              {tiers.map(t => <TierButton key={t.name} name={t.name} size={t.size} />)}
+            </div>
           </div>
         </header>
 
