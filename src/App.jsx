@@ -163,7 +163,7 @@ export default function App(){
   const Toggle = ({label, checked, onChange}) => (
     <button
       onClick={onChange}
-      className={\`rounded-2xl px-3 py-2 border text-sm \${ checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }\`}
+      className={`rounded-2xl px-3 py-2 border text-sm ${ checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }`}
     >
       {label}
     </button>
@@ -191,7 +191,7 @@ export default function App(){
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                className={\`rounded-2xl px-3 py-2 text-sm font-medium border \${ preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200' }\`}
+                className={`rounded-2xl px-3 py-2 text-sm font-medium border ${ preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200' }`}
               >
                 {p}
               </button>
