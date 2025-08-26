@@ -1,163 +1,201 @@
 import React, { useMemo, useState } from "react";
 
-// Creator Digital Product Revenue Calculator (v1)
-// Single-file React component. Tailwind CSS for styling via CDN in index.html.
-// Assumptions: A launch-based model + optional upsell + platform/affiliate/refund deductions.
-
-const NumberInput = ({ label, suffix, value, onChange, step = 1, min = 0, help }) => (
+const NumberInput = ({ label, suffix, value, onChange, note, step=1, min=0 }) => (
   <label className="block">
-    <span className="text-sm font-medium text-gray-700">{label}</span>
-    <div className="mt-1 flex items-center gap-2">
+    <span className="text-xs font-semibold text-gray-600">{label}</span>
+    <div className="mt-1 flex items-center gap-1">
       <input
         type="number"
-        className="w-full rounded-2xl border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
         value={value}
         step={step}
         min={min}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e)=> onChange(Number(e.target.value))}
       />
-      {suffix && <span className="text-gray-500 text-sm w-10 text-right">{suffix}</span>}
+      <span className="suffix">{suffix || ""}</span>
     </div>
-    {help && <p className="mt-1 text-xs text-gray-500">{help}</p>}
+    {note && <p className="mt-1 text-[11px] text-gray-500">{note}</p>}
   </label>
 );
 
 const presets = {
   "Starter": {
-    audienceSize: 20000,
-    reachRate: 25,
-    clickThroughRate: 2.5,
-    optInRate: 35,
-    launchesPerYear: 4,
-    emailConversionRate: 2.0,
-    productPrice: 37,
-    refundRate: 3,
-    upsellTakeRate: 15,
-    upsellPrice: 27,
-    affiliatePct: 0,
-    platformFeePct: 5
+    audienceSize: 150000,
+    reachRate: 10,
+    platformCTR: 4,
+    emailSubscribers: 2500,
+    emailCTR: 5,
+    platformCVR: 2.5,
+    emailCVR: 1.0,
+    fePrice: 37,
+    bumpPrice: 22,
+    bumpTakeRate: 30,
+    upsellPrice: 68,
+    upsellTakeRate: 20,
+    refundRate: 2,
+    launchesPerYear: 4
   },
   "Growing": {
-    audienceSize: 100000,
-    reachRate: 30,
-    clickThroughRate: 3.5,
-    optInRate: 38,
-    launchesPerYear: 6,
-    emailConversionRate: 2.2,
-    productPrice: 47,
-    refundRate: 3,
-    upsellTakeRate: 18,
-    upsellPrice: 37,
-    affiliatePct: 10,
-    platformFeePct: 3
+    audienceSize: 300000,
+    reachRate: 12,
+    platformCTR: 4.5,
+    emailSubscribers: 20000,
+    emailCTR: 6,
+    platformCVR: 2.8,
+    emailCVR: 1.2,
+    fePrice: 47,
+    bumpPrice: 27,
+    bumpTakeRate: 32,
+    upsellPrice: 87,
+    upsellTakeRate: 22,
+    refundRate: 2.5,
+    launchesPerYear: 6
   },
   "Established": {
-    audienceSize: 350000,
-    reachRate: 35,
-    clickThroughRate: 4.5,
-    optInRate: 40,
-    launchesPerYear: 8,
-    emailConversionRate: 2.5,
-    productPrice: 67,
+    audienceSize: 600000,
+    reachRate: 15,
+    platformCTR: 5,
+    emailSubscribers: 80000,
+    emailCTR: 7,
+    platformCVR: 3.2,
+    emailCVR: 1.5,
+    fePrice: 67,
+    bumpPrice: 37,
+    bumpTakeRate: 35,
+    upsellPrice: 97,
+    upsellTakeRate: 25,
     refundRate: 2,
-    upsellTakeRate: 22,
-    upsellPrice: 47,
-    affiliatePct: 15,
-    platformFeePct: 3
-  }
+    launchesPerYear: 8
+  },
 };
 
-function formatCurrency(n) {
-  if (Number.isNaN(n)) return "-";
-  return n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+function fmtCurrency(n){
+  if (!isFinite(n)) return "—";
+  return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
-function pct(n) {
-  if (Number.isNaN(n)) return "-";
-  return `${n.toFixed(1)}%`;
+function fmtPct(n){
+  if (!isFinite(n)) return "—";
+  return `${(n).toFixed(1)}%`;
 }
 
-export default function App() {
-  const [inputs, setInputs] = useState({ ...presets["Starter"] });
-  const [activePreset, setActivePreset] = useState("Starter");
+export default function App(){
+  const [preset, setPreset] = useState("Starter");
+  const [inputs, setInputs] = useState({...presets["Starter"]});
+  const [whatIf, setWhatIf] = useState({
+    emailBuyersUp10: false,
+    platformBuyersUp10: false,
+    bumpTakeRateUp10: false,
+    upsellTakeRateUp10: false,
+  });
 
-  const update = (k, v) => setInputs((s) => ({ ...s, [k]: v }));
+  const update = (k, v) => setInputs(s => ({...s, [k]: v}));
 
   const {
-    audienceSize,
-    reachRate,
-    clickThroughRate,
-    optInRate,
-    launchesPerYear,
-    emailConversionRate,
-    productPrice,
-    refundRate,
-    upsellTakeRate,
-    upsellPrice,
-    affiliatePct,
-    platformFeePct
+    audienceSize, reachRate, platformCTR,
+    emailSubscribers, emailCTR,
+    platformCVR, emailCVR,
+    fePrice,
+    bumpPrice, bumpTakeRate,
+    upsellPrice, upsellTakeRate,
+    refundRate, launchesPerYear
   } = inputs;
 
-  const calc = useMemo(() => {
-    // Top-of-funnel
-    const reached = audienceSize * (reachRate / 100);
-    const clicks = reached * (clickThroughRate / 100);
-    const leads = clicks * (optInRate / 100);
+  const calc = useMemo(()=>{
+    // Reach
+    const platformReach = audienceSize * (reachRate/100);
+    const emailReach = emailSubscribers * (emailCTR/100); // clicks from email
 
-    // Launch math per launch
-    const buyers = leads * (emailConversionRate / 100);
-    const grossBase = buyers * productPrice;
+    // Buyers (floating before rounding/toggles)
+    let platformBuyerFloat = platformReach * (platformCTR/100) * (platformCVR/100);
+    let emailBuyerFloat = emailReach * (emailCVR/100);
 
-    // Upsell
-    const upsellBuyers = buyers * (upsellTakeRate / 100);
-    const grossUpsell = upsellBuyers * upsellPrice;
+    // Apply what-if multipliers to buyer floats (before rounding)
+    if (whatIf.platformBuyersUp10) platformBuyerFloat *= 1.1;
+    if (whatIf.emailBuyersUp10) emailBuyerFloat *= 1.1;
 
-    // Refunds & fees
-    const grossAll = grossBase + grossUpsell;
-    const refunds = grossAll * (refundRate / 100);
-    const afterRefunds = grossAll - refunds;
-    const affiliateCosts = afterRefunds * (affiliatePct / 100);
-    const platformFees = afterRefunds * (platformFeePct / 100);
-    const netPerLaunch = afterRefunds - affiliateCosts - platformFees;
+    // Round buyers to whole people
+    const platformBuyers = Math.round(platformBuyerFloat);
+    const emailBuyers = Math.round(emailBuyerFloat);
+    const totalBuyers = platformBuyers + emailBuyers;
 
-    // Annualized
-    const annualNet = netPerLaunch * launchesPerYear;
+    // Take-rate adjustments (optionally increased by 10% via what-if)
+    const adjBumpTake = whatIf.bumpTakeRateUp10 ? bumpTakeRate * 1.1 : bumpTakeRate;
+    const adjUpsellTake = whatIf.upsellTakeRateUp10 ? upsellTakeRate * 1.1 : upsellTakeRate;
+
+    // Attach bump/upsell to ALL buyers
+    const bumpBuyers = Math.round(totalBuyers * (adjBumpTake/100));
+    const upsellBuyers = Math.round(totalBuyers * (adjUpsellTake/100));
+
+    // Revenues
+    const feRevenue = totalBuyers * fePrice;
+    const bumpRevenue = bumpBuyers * bumpPrice;
+    const upsellRevenue = upsellBuyers * upsellPrice;
+
+    const grossSubtotal = feRevenue + bumpRevenue + upsellRevenue;
+    const refunds = grossSubtotal * (refundRate/100);
+    const grossAfterRefunds = grossSubtotal - refunds;
+
+    const annualGross = grossAfterRefunds * launchesPerYear;
+
+    // Percentages
+    const platformBuyerPctOfReach = platformReach > 0 ? (platformBuyers / platformReach) * 100 : NaN;
+    const emailBuyerPctOfReach = emailReach > 0 ? (emailBuyers / emailReach) * 100 : NaN;
+    const totalReach = platformReach + emailReach;
+    const totalBuyerPctOfReach = totalReach > 0 ? (totalBuyers / totalReach) * 100 : NaN;
 
     return {
-      reached, clicks, leads, buyers,
-      grossBase, grossUpsell, grossAll,
-      refunds, affiliateCosts, platformFees,
-      netPerLaunch, annualNet
+      platformReach, emailReach, totalReach,
+      platformBuyers, emailBuyers, totalBuyers,
+      platformBuyerPctOfReach, emailBuyerPctOfReach, totalBuyerPctOfReach,
+      feRevenue, bumpRevenue, upsellRevenue,
+      grossSubtotal, refunds, grossAfterRefunds,
+      annualGross,
+      bumpBuyers, upsellBuyers,
     };
-  }, [inputs]);
+  }, [inputs, whatIf]);
 
   const applyPreset = (name) => {
-    setActivePreset(name);
-    setInputs({ ...presets[name] });
+    setPreset(name);
+    setInputs({...presets[name]});
   };
 
-  const stat = (label, value, sub) => (
+  const Toggle = ({label, checked, onChange}) => (
+    <button
+      onClick={onChange}
+      className={`rounded-2xl px-3 py-2 border text-sm ${
+        checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const Stat = ({ label, value, sub }) => (
     <div className="rounded-2xl bg-white ring-1 ring-gray-100 p-4 shadow-sm">
-      <div className="text-xs uppercase tracking-wide text-gray-500">{label}</div>
+      <div className="text-[11px] uppercase tracking-wide text-gray-500">{label}</div>
       <div className="mt-1 text-xl font-semibold">{value}</div>
-      {sub && <div className="mt-1 text-xs text-gray-500">{sub}</div>}
+      {sub && <div className="mt-1 text-[11px] text-gray-500">{sub}</div>}
     </div>
   );
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-gray-50 to-white p-6">
+    <div className="min-h-screen w-full p-6">
       <div className="mx-auto max-w-6xl">
+        {/* Header / Presets */}
         <header className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Creator Digital Product Revenue Calculator</h1>
-            <p className="text-gray-600 mt-1">Model a launch-based funnel with optional upsell, fees, and refunds. Adjust assumptions to see net revenue per launch and per year.</p>
+            <p className="text-gray-600 mt-1">Enter your assumptions to project how much your own digital products can increase your revenue.</p>
           </div>
           <div className="flex items-center gap-2">
             {Object.keys(presets).map((p) => (
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                className={`rounded-2xl px-3 py-2 text-sm font-medium border ${(activePreset===p)?'bg-indigo-600 text-white border-indigo-600':'bg-white text-gray-800 border-gray-200 hover:border-indigo-200'}`}
+                className={`rounded-2xl px-3 py-2 text-sm font-medium border ${
+                  preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200'
+                }`}
               >
                 {p}
               </button>
@@ -167,51 +205,60 @@ export default function App() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Inputs */}
-          <section className="rounded-3xl bg-white p-5 ring-1 ring-gray-100 shadow-sm">
+          <section className="card bg-white p-5 ring-1 ring-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Inputs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <NumberInput label="Audience size" value={audienceSize} onChange={(v)=>update('audienceSize', v)} help="Total followers/subscribers across your main platform(s)." />
-              <NumberInput label="Average reach per launch" suffix="%" value={reachRate} onChange={(v)=>update('reachRate', v)} step={0.1} help="What % of the audience typically sees the promo." />
+              <NumberInput label="Audience size" value={inputs.audienceSize} onChange={(v)=>update('audienceSize', v)} note="Total followers on your main platform(s)." />
+              <NumberInput label="Average reach per post" suffix="%" value={inputs.reachRate} onChange={(v)=>update('reachRate', v)} note="% of audience who see the promo." step={0.1} />
 
-              <NumberInput label="Click-through rate (reach → page)" suffix="%" value={clickThroughRate} onChange={(v)=>update('clickThroughRate', v)} step={0.1} />
-              <NumberInput label="Opt-in rate (page → email)" suffix="%" value={optInRate} onChange={(v)=>update('optInRate', v)} step={0.1} />
+              <NumberInput label="Platform click‑through rate" suffix="%" value={inputs.platformCTR} onChange={(v)=>update('platformCTR', v)} note="% of reached who click to sales page." step={0.1} />
+              <NumberInput label="Existing email subscribers" value={inputs.emailSubscribers} onChange={(v)=>update('emailSubscribers', v)} />
 
-              <NumberInput label="Email conversion rate (buyers)" suffix="%" value={emailConversionRate} onChange={(v)=>update('emailConversionRate', v)} step={0.1} />
-              <NumberInput label="Launches per year" value={launchesPerYear} onChange={(v)=>update('launchesPerYear', v)} />
+              <NumberInput label="Email click‑through rate" suffix="%" value={inputs.emailCTR} onChange={(v)=>update('emailCTR', v)} note="% of subscribers who click the email." step={0.1} />
+              <NumberInput label="Platform conversion rate (buyers)" suffix="%" value={inputs.platformCVR} onChange={(v)=>update('platformCVR', v)} note="% of platform CTR who purchase." step={0.1} />
 
-              <NumberInput label="Core product price" value={productPrice} onChange={(v)=>update('productPrice', v)} step={1} />
-              <NumberInput label="Refund rate" suffix="%" value={refundRate} onChange={(v)=>update('refundRate', v)} step={0.1} />
+              <NumberInput label="Email conversion rate (buyers)" suffix="%" value={inputs.emailCVR} onChange={(v)=>update('emailCVR', v)} note="% of email CTR who purchase." step={0.1} />
+              <NumberInput label="Front‑end offer price" value={inputs.fePrice} onChange={(v)=>update('fePrice', v)} />
 
-              <NumberInput label="Upsell take-rate" suffix="%" value={upsellTakeRate} onChange={(v)=>update('upsellTakeRate', v)} step={0.1} help="% of buyers who also take the upsell." />
-              <NumberInput label="Upsell price" value={upsellPrice} onChange={(v)=>update('upsellPrice', v)} step={1} />
+              <NumberInput label="Order bump price" value={inputs.bumpPrice} onChange={(v)=>update('bumpPrice', v)} />
+              <NumberInput label="Order bump take rate" suffix="%" value={inputs.bumpTakeRate} onChange={(v)=>update('bumpTakeRate', v)} note="% of buyers who add the bump." step={0.1} />
 
-              <NumberInput label="Affiliate share" suffix="%" value={affiliatePct} onChange={(v)=>update('affiliatePct', v)} step={0.1} help="% of net-after-refunds paid to affiliates." />
-              <NumberInput label="Platform fees" suffix="%" value={platformFeePct} onChange={(v)=>update('platformFeePct', v)} step={0.1} help="Payment processor/platform % after refunds (e.g., Stripe, Gumroad)." />
+              <NumberInput label="Upsell offer price" value={inputs.upsellPrice} onChange={(v)=>update('upsellPrice', v)} />
+              <NumberInput label="Upsell offer take rate" suffix="%" value={inputs.upsellTakeRate} onChange={(v)=>update('upsellTakeRate', v)} note="% of buyers who take the upsell." step={0.1} />
+
+              <NumberInput label="Refund rate" suffix="%" value={inputs.refundRate} onChange={(v)=>update('refundRate', v)} note="Applied to FE + bump + upsell combined." step={0.1} />
+              <NumberInput label="Launches per year" value={inputs.launchesPerYear} onChange={(v)=>update('launchesPerYear', v)} />
             </div>
           </section>
 
-          {/* Outputs */}
-          <section className="rounded-3xl bg-white p-5 ring-1 ring-gray-100 shadow-sm">
+          {/* Results */}
+          <section className="card bg-white p-5 ring-1 ring-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Results</h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-              {stat("People reached", calc.reached.toLocaleString(), pct(reachRate) + " of audience")}
-              {stat("Clicks to page", calc.clicks.toLocaleString(), pct(clickThroughRate) + " of reached")}
-              {stat("Leads (emails)", calc.leads.toLocaleString(), pct(optInRate) + " of clicks")}
-              {stat("Buyers", Math.round(calc.buyers).toLocaleString(), pct(emailConversionRate) + " of leads")}
+            {/* Buyer counts */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <Stat label="Platform buyers" value={calc.platformBuyers.toLocaleString()} sub={
+                isFinite(calc.platformBuyerPctOfReach) ? fmtPct(calc.platformBuyerPctOfReach) + " of platform reach" : "—"
+              }/>
+              <Stat label="Email buyers" value={calc.emailBuyers.toLocaleString()} sub={
+                isFinite(calc.emailBuyerPctOfReach) ? fmtPct(calc.emailBuyerPctOfReach) + " of email reach" : "—"
+              }/>
+              <Stat label="Total buyers" value={calc.totalBuyers.toLocaleString()} sub={
+                isFinite(calc.totalBuyerPctOfReach) ? fmtPct(calc.totalBuyerPctOfReach) + " of total reach" : "—"
+              }/>
             </div>
 
+            {/* Revenue breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-2xl bg-gray-50 p-4">
                 <div className="text-sm font-medium text-gray-700 mb-2">Per Launch</div>
                 <ul className="space-y-1 text-sm">
-                  <li className="flex justify-between"><span>Gross (core)</span><span>{formatCurrency(calc.grossBase)}</span></li>
-                  <li className="flex justify-between"><span>Gross (upsell)</span><span>{formatCurrency(calc.grossUpsell)}</span></li>
-                  <li className="flex justify-between border-t pt-1"><span>Total Gross</span><span>{formatCurrency(calc.grossAll)}</span></li>
-                  <li className="flex justify-between"><span>Refunds</span><span>-{formatCurrency(calc.refunds)}</span></li>
-                  <li className="flex justify-between"><span>Affiliate payouts</span><span>-{formatCurrency(calc.affiliateCosts)}</span></li>
-                  <li className="flex justify-between"><span>Platform/processor fees</span><span>-{formatCurrency(calc.platformFees)}</span></li>
-                  <li className="flex justify-between text-lg font-semibold border-t pt-2"><span>Net revenue per launch</span><span>{formatCurrency(calc.netPerLaunch)}</span></li>
+                  <li className="flex justify-between"><span>Front‑end offer sales</span><span>{fmtCurrency(calc.feRevenue)}</span></li>
+                  <li className="flex justify-between"><span>Order bump sales</span><span>{fmtCurrency(calc.bumpRevenue)}</span></li>
+                  <li className="flex justify-between"><span>Upsell offer sales</span><span>{fmtCurrency(calc.upsellRevenue)}</span></li>
+                  <li className="flex justify-between border-t pt-1"><span>Gross sales subtotal</span><span>{fmtCurrency(calc.grossSubtotal)}</span></li>
+                  <li className="flex justify-between"><span>Refunds</span><span>-{fmtCurrency(calc.refunds)}</span></li>
+                  <li className="flex justify-between text-lg font-semibold border-t pt-2"><span>Gross sales (after refunds)</span><span>{fmtCurrency(calc.grossAfterRefunds)}</span></li>
                 </ul>
               </div>
 
@@ -219,30 +266,26 @@ export default function App() {
                 <div className="text-sm font-medium text-gray-700 mb-2">Annualized</div>
                 <ul className="space-y-1 text-sm">
                   <li className="flex justify-between"><span>Launches per year</span><span>{launchesPerYear}</span></li>
-                  <li className="flex justify-between text-lg font-semibold border-t pt-2"><span>Estimated annual net</span><span>{formatCurrency(calc.annualNet)}</span></li>
+                  <li className="flex justify-between text-lg font-semibold border-t pt-2"><span>Estimated annual gross</span><span>{fmtCurrency(calc.annualGross)}</span></li>
                 </ul>
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-gray-500">
-              <p>Notes: This is a directional model, not a forecast. Real-world performance varies with list quality, offer-market fit, and promo strategy.</p>
+            {/* What-if toggles */}
+            <div className="mt-4 rounded-2xl bg-gray-50 p-4">
+              <div className="text-sm font-medium text-gray-700 mb-2">What‑if toggles</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+                <Toggle label="Increase email buyers by 10%" checked={whatIf.emailBuyersUp10} onChange={()=>setWhatIf(s=>({...s, emailBuyersUp10: !s.emailBuyersUp10}))} />
+                <Toggle label="Increase platform buyers by 10%" checked={whatIf.platformBuyersUp10} onChange={()=>setWhatIf(s=>({...s, platformBuyersUp10: !s.platformBuyersUp10}))} />
+                <Toggle label="Increase order bump take rate by 10%" checked={whatIf.bumpTakeRateUp10} onChange={()=>setWhatIf(s=>({...s, bumpTakeRateUp10: !s.bumpTakeRateUp10}))} />
+                <Toggle label="Increase upsell offer take rate by 10%" checked={whatIf.upsellTakeRateUp10} onChange={()=>setWhatIf(s=>({...s, upsellTakeRateUp10: !s.upsellTakeRateUp10}))} />
+              </div>
             </div>
           </section>
         </div>
 
-        {/* What-if quick toggles */}
-        <section className="mt-6 rounded-3xl bg-white p-5 ring-1 ring-gray-100 shadow-sm">
-          <h3 className="text-base font-semibold mb-3">What-if toggles</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <button onClick={() => update('emailConversionRate', Math.max(0, emailConversionRate + 0.5))} className="rounded-2xl px-3 py-2 border border-gray-200 hover:border-indigo-200">+0.5% Email conversion</button>
-            <button onClick={() => update('optInRate', Math.max(0, optInRate + 2))} className="rounded-2xl px-3 py-2 border border-gray-200 hover:border-indigo-200">+2% Opt-in rate</button>
-            <button onClick={() => update('upsellTakeRate', Math.max(0, upsellTakeRate + 2))} className="rounded-2xl px-3 py-2 border border-gray-200 hover:border-indigo-200">+2% Upsell take-rate</button>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="mt-8 text-center text-xs text-gray-500">
-          Built for creators & partners to scope revenue potential of digital products (courses, ebooks, templates, workshops). v1 • Edit assumptions to fit your funnel.
+        <footer className="mt-8 text-center text-[11px] text-gray-500">
+          Built for creators to scope revenue potential of digital products (courses, ebooks, templates, workshops). v1.1
         </footer>
       </div>
     </div>

@@ -1,13 +1,13 @@
-# Creator Digital Product Revenue Calculator
+# Creator Digital Product Revenue Calculator (v1.1)
 
-Quick-start React (Vite) project for hosting the calculator and deploying on Vercel.
+Working calculator per approved spec.
 
 ## Local Dev
 ```bash
 npm install
 npm run dev
 ```
-Then open http://localhost:5173
+Open http://localhost:5173
 
 ## Build
 ```bash
@@ -15,11 +15,9 @@ npm run build
 ```
 
 ## Deploy to Vercel
-1) Push this folder to a GitHub repo.
-2) In Vercel, click **New Project**, choose the repo.
-3) Framework: **Vite** (auto-detected), Build: `npm run build`, Output: `dist`.
-4) Deploy. Your app will be live at `https://<project>.vercel.app`.
+- Build command: `npm run build`
+- Output directory: `dist`
 
 ## Notes
-- Tailwind styles are provided via the Play CDN in `index.html` for simplicity.
-- Replace presets/labels as needed for your creators.
+- Buyers are rounded to whole people before revenue is computed.
+- Refunds apply to combined FE + bump + upsell gross.
