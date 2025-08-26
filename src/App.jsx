@@ -163,9 +163,7 @@ export default function App(){
   const Toggle = ({label, checked, onChange}) => (
     <button
       onClick={onChange}
-      className={`rounded-2xl px-3 py-2 border text-sm ${
-        checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200'
-      }`}
+      className={\`rounded-2xl px-3 py-2 border text-sm \${ checked ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200' }\`}
     >
       {label}
     </button>
@@ -182,20 +180,18 @@ export default function App(){
   return (
     <div className="min-h-screen w-full p-6">
       <div className="mx-auto max-w-6xl">
-        {/* Header / Presets */}
         <header className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Creator Digital Product Revenue Calculator</h1>
             <p className="text-gray-600 mt-1">Enter your assumptions to project how much your own digital products can increase your revenue.</p>
+            <p className="text-[11px] text-gray-500 mt-1">Notes: This is a directional model, not a forecast. Real-world performance varies with audience and list quality, offer-market fit, and promo strategy.</p>
           </div>
           <div className="flex items-center gap-2">
             {Object.keys(presets).map((p) => (
               <button
                 key={p}
                 onClick={() => applyPreset(p)}
-                className={`rounded-2xl px-3 py-2 text-sm font-medium border ${
-                  preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200'
-                }`}
+                className={\`rounded-2xl px-3 py-2 text-sm font-medium border \${ preset===p ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-800 border-gray-200 hover:border-indigo-200' }\`}
               >
                 {p}
               </button>
@@ -204,7 +200,6 @@ export default function App(){
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Inputs */}
           <section className="card bg-white p-5 ring-1 ring-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Inputs</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -231,24 +226,15 @@ export default function App(){
             </div>
           </section>
 
-          {/* Results */}
           <section className="card bg-white p-5 ring-1 ring-gray-100 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Results</h2>
 
-            {/* Buyer counts */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-              <Stat label="Platform buyers" value={calc.platformBuyers.toLocaleString()} sub={
-                isFinite(calc.platformBuyerPctOfReach) ? fmtPct(calc.platformBuyerPctOfReach) + " of platform reach" : "—"
-              }/>
-              <Stat label="Email buyers" value={calc.emailBuyers.toLocaleString()} sub={
-                isFinite(calc.emailBuyerPctOfReach) ? fmtPct(calc.emailBuyerPctOfReach) + " of email reach" : "—"
-              }/>
-              <Stat label="Total buyers" value={calc.totalBuyers.toLocaleString()} sub={
-                isFinite(calc.totalBuyerPctOfReach) ? fmtPct(calc.totalBuyerPctOfReach) + " of total reach" : "—"
-              }/>
+              <Stat label="Platform buyers" value={calc.platformBuyers.toLocaleString()} sub={ isFinite(calc.platformBuyerPctOfReach) ? fmtPct(calc.platformBuyerPctOfReach) + " of platform reach" : "—" }/>
+              <Stat label="Email buyers" value={calc.emailBuyers.toLocaleString()} sub={ isFinite(calc.emailBuyerPctOfReach) ? fmtPct(calc.emailBuyerPctOfReach) + " of email reach" : "—" }/>
+              <Stat label="Total buyers" value={calc.totalBuyers.toLocaleString()} sub={ isFinite(calc.totalBuyerPctOfReach) ? fmtPct(calc.totalBuyerPctOfReach) + " of total reach" : "—" }/>
             </div>
 
-            {/* Revenue breakdown */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="rounded-2xl bg-gray-50 p-4">
                 <div className="text-sm font-medium text-gray-700 mb-2">Per Launch</div>
@@ -261,7 +247,6 @@ export default function App(){
                   <li className="flex justify-between text-lg font-semibold border-t pt-2"><span>Gross sales (after refunds)</span><span>{fmtCurrency(calc.grossAfterRefunds)}</span></li>
                 </ul>
               </div>
-
               <div className="rounded-2xl bg-gray-50 p-4">
                 <div className="text-sm font-medium text-gray-700 mb-2">Annualized</div>
                 <ul className="space-y-1 text-sm">
@@ -271,7 +256,6 @@ export default function App(){
               </div>
             </div>
 
-            {/* What-if toggles */}
             <div className="mt-4 rounded-2xl bg-gray-50 p-4">
               <div className="text-sm font-medium text-gray-700 mb-2">What‑if toggles</div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
@@ -283,10 +267,6 @@ export default function App(){
             </div>
           </section>
         </div>
-
-        <footer className="mt-8 text-center text-[11px] text-gray-500">
-          Built for creators to scope revenue potential of digital products (courses, ebooks, templates, workshops). v1.1
-        </footer>
       </div>
     </div>
   );
